@@ -1,0 +1,252 @@
+# Hendy Studio Pro Render Blueprint.
+# Required user-managed secrets: ADMIN_EMAIL, ADMIN_PASSWORD, MongoDB URI, and S3/R2 credentials.
+# Keep PostgreSQL and Key Value access internal; never commit real secrets.
+services:
+  - type: web
+    name: hendy-studio-api
+    autoDeployTrigger: checksPass
+    runtime: docker
+    plan: 0.5c-512mb
+    region: singapore
+    dockerfilePath: ./Dockerfile.api
+    dockerContext: .
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SERVICE_ROLE
+        value: api
+      - key: PORT
+        value: "8080"
+      - key: TRUST_PROXY_HOPS
+        value: "1"
+      - key: CORS_ORIGINS
+        value: https://hendy-home.onrender.com,https://hendy-admin.onrender.com,https://hendy-studio-web.onrender.com,https://hendy-release-center.onrender.com
+      - key: DATABASE_URL
+        fromDatabase:
+          name: hendy-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: hendy-redis
+          type: keyvalue
+          property: connectionString
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DATABASE
+        value: hendy_studio
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_TTL
+        value: 15m
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_REGION
+        value: auto
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: METRICS_TOKEN
+        generateValue: true
+      - key: MARKETING_WEB_ORIGIN
+        value: https://hendy-home.onrender.com
+      - key: ADMIN_WEB_ORIGIN
+        value: https://hendy-admin.onrender.com
+      - key: STUDIO_WEB_ORIGIN
+        value: https://hendy-studio-web.onrender.com
+      - key: RELEASE_CENTER_ORIGIN
+        value: https://hendy-release-center.onrender.com
+
+  - type: worker
+    name: hendy-studio-render-worker
+    autoDeployTrigger: checksPass
+    runtime: docker
+    plan: 1c-2g
+    region: singapore
+    dockerfilePath: ./Dockerfile.api
+    dockerContext: .
+    dockerCommand: sh -c "bun run --filter @hendy/core-server migrate && bun run --filter @hendy/core-server worker"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SERVICE_ROLE
+        value: worker
+      - key: DATABASE_URL
+        fromDatabase:
+          name: hendy-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: hendy-redis
+          type: keyvalue
+          property: connectionString
+      - key: MONGODB_URI
+        fromService:
+          name: hendy-studio-api
+          type: web
+          envVarKey: MONGODB_URI
+      - key: MONGODB_DATABASE
+        value: hendy_studio
+      - key: JWT_SECRET
+        fromService:
+          name: hendy-studio-api
+          type: web
+          envVarKey: JWT_SECRET
+      - key: S3_ENDPOINT
+        fromService:
+          name: hendy-studio-api
+          type: web
+          envVarKey: S3_ENDPOINT
+      - key: S3_REGION
+        value: auto
+      - key: S3_BUCKET
+        fromService:
+          name: hendy-studio-api
+          type: web
+          envVarKey: S3_BUCKET
+      - key: S3_ACCESS_KEY_ID
+        fromService:
+          name: hendy-studio-api
+          type: web
+          envVarKey: S3_ACCESS_KEY_ID
+      - key: S3_SECRET_ACCESS_KEY
+        fromService:
+          name: hendy-studio-api
+          type: web
+          envVarKey: S3_SECRET_ACCESS_KEY
+
+  - type: web
+    name: hendy-home
+    autoDeployTrigger: checksPass
+    runtime: static
+    buildCommand: bash scripts/render-build-static.sh marketing-web
+    staticPublishPath: apps/marketing-web/dist
+    envVars:
+      - key: VITE_STUDIO_URL
+        value: https://hendy-studio-web.onrender.com
+      - key: VITE_ADMIN_URL
+        value: https://hendy-admin.onrender.com
+      - key: VITE_RELEASE_CENTER_URL
+        value: https://hendy-release-center.onrender.com
+    routes:
+      - type: rewrite
+        source: /privacy
+        destination: /privacy.html
+      - type: rewrite
+        source: /terms
+        destination: /terms.html
+      - type: rewrite
+        source: /support
+        destination: /support.html
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+
+  - type: web
+    name: hendy-admin
+    autoDeployTrigger: checksPass
+    runtime: static
+    buildCommand: bash scripts/render-build-static.sh admin-web
+    staticPublishPath: apps/admin-web/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://hendy-studio-api.onrender.com/api/v1
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+
+  - type: web
+    name: hendy-studio-web
+    autoDeployTrigger: checksPass
+    runtime: static
+    buildCommand: bash scripts/render-build-static.sh studio-web
+    staticPublishPath: apps/studio-web/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://hendy-studio-api.onrender.com/api/v1
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+
+  - type: web
+    name: hendy-release-center
+    autoDeployTrigger: checksPass
+    runtime: static
+    buildCommand: bash scripts/render-build-static.sh release-center
+    staticPublishPath: apps/release-center/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://hendy-studio-api.onrender.com/api/v1
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+
+  - type: keyvalue
+    name: hendy-redis
+    plan: 256mb
+    region: singapore
+    maxmemoryPolicy: noeviction
+    persistenceMode: journal-snapshot
+    # Empty allow list blocks public ingress; apps connect via Render private networking.
+    ipAllowList: []
+
+databases:
+  - name: hendy-postgres
+    databaseName: hendy_studio
+    user: hendy_studio
+    plan: basic-1gb
+    region: singapore
+    postgresMajorVersion: "16"
+    ipAllowList: []

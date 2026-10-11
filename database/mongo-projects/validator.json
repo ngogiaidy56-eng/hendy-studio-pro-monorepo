@@ -1,0 +1,13 @@
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "required": ["ownerId", "title", "timeline", "createdAt", "updatedAt"],
+    "properties": {
+      "ownerId": {"bsonType": "string", "description": "PostgreSQL users.id UUID"},
+      "title": {"bsonType": "string", "minLength": 1, "maxLength": 120},
+      "timeline": {"bsonType": "object", "description": "Versioned edit decision list / timeline document"},
+      "createdAt": {"bsonType": "date"},
+      "updatedAt": {"bsonType": "date"}
+    }
+  }
+}

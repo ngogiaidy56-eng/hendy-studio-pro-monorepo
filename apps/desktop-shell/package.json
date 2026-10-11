@@ -1,0 +1,19 @@
+{
+  "name": "@hendy/desktop-shell",
+  "version": "1.2.0",
+  "private": true,
+  "description": "Hendy Studio Pro desktop wrapper; web-hosted workspace with hardened Electron navigation.",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --config electron-builder.json",
+    "dist:win": "electron-builder --config electron-builder.json --win nsis msi --x64",
+    "dist:mac": "electron-builder --config electron-builder.json --mac dmg pkg",
+    "dist:linux": "electron-builder --config electron-builder.json --linux AppImage deb",
+    "dist:win-store": "node ../../scripts/create-electron-store-config.mjs && electron-builder --config electron-builder.store.generated.json --win appx --x64"
+  },
+  "devDependencies": {
+    "electron": "^35.0.0",
+    "electron-builder": "^26.0.12"
+  }
+}

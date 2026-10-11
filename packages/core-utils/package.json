@@ -1,0 +1,11 @@
+{
+  "name": "@hendy/core-utils",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "tsc --noEmit -p tsconfig.json",
+    "test": "bun test src/index.test.ts"
+  }
+}

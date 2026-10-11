@@ -1,0 +1,15 @@
+FROM oven/bun:1.2.15-alpine
+WORKDIR /app
+RUN apk add --no-cache ffmpeg ca-certificates font-dejavu
+COPY package.json tsconfig.base.json ./
+COPY apps ./apps
+COPY packages ./packages
+COPY integrated-pipeline/server ./integrated-pipeline/server
+COPY database ./database
+COPY scripts ./scripts
+RUN bun install
+ENV NODE_ENV=production
+ENV API_PORT=8080
+EXPOSE 8080
+USER bun
+CMD ["sh", "-c", "bun run --filter @hendy/core-server migrate && bun run --filter @hendy/core-server seed && bun run --filter @hendy/core-server start"]

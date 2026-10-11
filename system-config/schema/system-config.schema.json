@@ -1,0 +1,263 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hendystudio.net/schemas/system-config.schema.json",
+  "title": "Hendy Studio Pro System Configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "app",
+    "network",
+    "media",
+    "security",
+    "features"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "app": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "slug",
+        "version",
+        "defaultLocale"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "defaultLocale": {
+          "type": "string"
+        }
+      }
+    },
+    "network": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "apiPort",
+        "adminPort",
+        "studioPort",
+        "ktorPort",
+        "maxTrustedProxyHops"
+      ],
+      "properties": {
+        "apiPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "adminPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "studioPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "ktorPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "maxTrustedProxyHops": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "releaseCenterPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "marketingPort": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        }
+      }
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxUploadBytes",
+        "maxSubtitleBytes",
+        "maxImageBytes",
+        "maxSourceBytesPerRender",
+        "maxOutputBytes",
+        "maxClipsPerRender",
+        "maxUniqueAssetsPerRender",
+        "maxTimelineSeconds",
+        "supportedVideoMimeTypes",
+        "supportedAudioMimeTypes",
+        "supportedImageMimeTypes",
+        "subtitleRenderFormat"
+      ],
+      "properties": {
+        "maxUploadBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxSubtitleBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxImageBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxSourceBytesPerRender": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxOutputBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxClipsPerRender": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "maxUniqueAssetsPerRender": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 512
+        },
+        "maxTimelineSeconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "supportedVideoMimeTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "supportedAudioMimeTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "supportedImageMimeTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "subtitleRenderFormat": {
+          "const": "srt"
+        }
+      }
+    },
+    "security": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "jwtAccessTtl",
+        "presignedUrlTtlSeconds",
+        "productionJwtSecretMinBytes",
+        "productionAdminPasswordMinChars",
+        "metricsTokenMinChars"
+      ],
+      "properties": {
+        "jwtAccessTtl": {
+          "type": "string",
+          "pattern": "^\\d+[smhd]$"
+        },
+        "presignedUrlTtlSeconds": {
+          "type": "integer",
+          "minimum": 60,
+          "maximum": 900
+        },
+        "productionJwtSecretMinBytes": {
+          "type": "integer",
+          "minimum": 32
+        },
+        "productionAdminPasswordMinChars": {
+          "type": "integer",
+          "minimum": 16
+        },
+        "metricsTokenMinChars": {
+          "type": "integer",
+          "minimum": 24
+        }
+      }
+    },
+    "features": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rbac",
+        "auditLog",
+        "localWhisperAgent",
+        "geminiTranslation",
+        "cloudRender",
+        "telegramMiniApp",
+        "billingWebhooks",
+        "animatedKeyframes",
+        "advancedTransitions",
+        "assSubtitleStyling",
+        "nativeReleasePipeline"
+      ],
+      "properties": {
+        "rbac": {
+          "type": "boolean"
+        },
+        "auditLog": {
+          "type": "boolean"
+        },
+        "localWhisperAgent": {
+          "type": "boolean"
+        },
+        "geminiTranslation": {
+          "type": "boolean"
+        },
+        "cloudRender": {
+          "type": "boolean"
+        },
+        "telegramMiniApp": {
+          "type": "boolean"
+        },
+        "billingWebhooks": {
+          "type": "boolean"
+        },
+        "animatedKeyframes": {
+          "type": "boolean"
+        },
+        "advancedTransitions": {
+          "type": "boolean"
+        },
+        "assSubtitleStyling": {
+          "type": "boolean"
+        },
+        "nativeReleasePipeline": {
+          "type": "boolean"
+        },
+        "appPublishingCenter": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

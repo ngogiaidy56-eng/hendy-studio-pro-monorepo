@@ -1,0 +1,62 @@
+{
+  "appId": "net.hendystudio.pro",
+  "productName": "Hendy Studio Pro",
+  "directories": {
+    "buildResources": "build",
+    "output": "../../dist/native/desktop"
+  },
+  "files": [
+    "main.cjs",
+    "preload.cjs",
+    "package.json"
+  ],
+  "asar": true,
+  "compression": "maximum",
+  "artifactName": "HendyStudio-${version}-${os}-${arch}.${ext}",
+  "publish": null,
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      },
+      {
+        "target": "msi",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "icon": "build/icon.ico"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true
+  },
+  "mac": {
+    "target": [
+      "dmg",
+      "pkg"
+    ],
+    "category": "public.app-category.video",
+    "hardenedRuntime": true,
+    "gatekeeperAssess": false,
+    "icon": "build/icon.icns"
+  },
+  "dmg": {
+    "sign": false
+  },
+  "linux": {
+    "target": [
+      "AppImage",
+      "deb"
+    ],
+    "category": "AudioVideo",
+    "maintainer": "Hendy Studio",
+    "icon": "build/icon.png"
+  }
+}

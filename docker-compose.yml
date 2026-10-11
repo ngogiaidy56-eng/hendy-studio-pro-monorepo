@@ -1,0 +1,122 @@
+name: hendy-studio-pro
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hendy_studio
+      POSTGRES_USER: hendy
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hendy -d hendy_studio"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [private]
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: ["redis-data:/data"]
+    healthcheck: {test: ["CMD", "redis-cli", "ping"], interval: 5s, timeout: 3s, retries: 20}
+    networks: [private]
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes: ["mongo-data:/data/db"]
+    healthcheck: {test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"], interval: 5s, timeout: 3s, retries: 20}
+    networks: [private]
+  api:
+    build: {context: ., dockerfile: Dockerfile, target: api}
+    restart: unless-stopped
+    init: true
+    env_file: [.env]
+    environment:
+      SERVICE_ROLE: api
+      API_PORT: 8080
+      DATABASE_URL: postgres://hendy:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/hendy_studio
+      REDIS_URL: redis://redis:6379
+      MONGODB_URI: mongodb://mongo:27017/hendy_studio
+    command: ["sh", "-c", "bun run --filter @hendy/core-server migrate && bun run --filter @hendy/core-server seed && bun run --filter @hendy/core-server start"]
+    ports: ["127.0.0.1:8080:8080"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      mongo: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "bun", "-e", "fetch('http://127.0.0.1:8080/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks: [private]
+  render-worker:
+    build: {context: ., dockerfile: Dockerfile, target: api}
+    restart: unless-stopped
+    init: true
+    command: ["bun", "run", "--filter", "@hendy/core-server", "worker"]
+    env_file: [.env]
+    environment:
+      SERVICE_ROLE: worker
+      DATABASE_URL: postgres://hendy:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/hendy_studio
+      REDIS_URL: redis://redis:6379
+      MONGODB_URI: mongodb://mongo:27017/hendy_studio
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    networks: [private]
+  admin-web:
+    build: {context: ., dockerfile: Dockerfile, target: admin-web}
+    ports: ["127.0.0.1:5173:80"]
+    depends_on:
+      api: {condition: service_healthy}
+    networks: [private]
+  studio-web:
+    build: {context: ., dockerfile: Dockerfile, target: studio-web}
+    ports: ["127.0.0.1:5174:80"]
+    depends_on:
+      api: {condition: service_healthy}
+    networks: [private]
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    profiles: ["observability"]
+    restart: unless-stopped
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=15d"]
+    volumes:
+      - ./infra/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./.secrets/metrics_token:/run/secrets/metrics_token:ro
+      - prometheus-data:/prometheus
+    ports: ["127.0.0.1:9090:9090"]
+    depends_on: [api]
+    networks: [private]
+  grafana:
+    image: grafana/grafana:11.5.2
+    profiles: ["observability"]
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./infra/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports: ["127.0.0.1:3000:3000"]
+    depends_on: [prometheus]
+    networks: [private]
+  ktor-core:
+    profiles: ["ktor"]
+    build: {context: ./integrated-pipeline/ktor-backend, dockerfile: Dockerfile}
+    restart: unless-stopped
+    ports: ["127.0.0.1:8090:8090"]
+    networks: [private]
+volumes:
+  postgres-data:
+  redis-data:
+  mongo-data:
+  prometheus-data:
+  grafana-data:
+networks:
+  private:
+    driver: bridge

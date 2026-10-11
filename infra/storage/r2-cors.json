@@ -1,0 +1,24 @@
+[
+  {
+    "AllowedOrigins": [
+      "http://localhost:5174",
+      "https://hendystudio.com",
+      "https://www.hendystudio.com",
+      "https://hendy-release-center.onrender.com",
+      "https://hendy-studio-web.onrender.com"
+    ],
+    "AllowedMethods": [
+      "GET",
+      "PUT",
+      "HEAD"
+    ],
+    "AllowedHeaders": [
+      "Content-Type",
+      "x-amz-*"
+    ],
+    "ExposeHeaders": [
+      "ETag"
+    ],
+    "MaxAgeSeconds": 3600
+  }
+]

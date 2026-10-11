@@ -1,0 +1,74 @@
+HENDY STUDIO PRO — UNIFIED MONOREPO ARCHITECTURE
+================================================
+Prepared: 2026-10-12
+
+TIER 0 — ADMIN CONTROL PLANE
+  apps/admin-web/              React Admin UI (separate origin)
+  integrated-pipeline/server/  Express API, auth, RBAC, audit log, plans,
+                               account status, settings, metrics and operations
+  PostgreSQL migrations        Identity, roles, permissions, assets, jobs,
+                               quotas, audit and release metadata
+
+TIER 1 — USER STUDIO & PRODUCT SURFACES
+  apps/marketing-web/          Unique product homepage, legal/support routes
+  apps/studio-web/              Video project workspace and subtitle tools
+  apps/release-center/          Separate App Store / Software Release Center:
+                                version/channel, release catalog, artifact
+                                uploads, SHA-256, download links and store status
+
+TIER 2 — EDITOR & CORE PACKAGES
+  packages/core-utils/          Validated shared system config and utilities
+  packages/ui-components/       Shared UI foundations
+  FFmpeg render worker          Bounded multi-track compositor: MP4/MOV sources,
+                                separate audio, static PiP/overlay and SRT burn-in
+  IMPORTANT: advanced keyframes, animated transitions and a full offline editor
+              are not claimed as complete in this starter.
+
+TIER 3 — EDGE & EXTERNAL SERVICES
+  integrated-pipeline/cloudflare/ Workers and Telegram webhook starter
+  S3-compatible storage / R2    Private source and output assets with presigned URLs
+  Gemini                         Optional AI subtitle translation when configured
+  MongoDB                        Flexible project and timeline documents
+  Redis/BullMQ                   Durable queue connection and background jobs
+
+TIER 4 — SOFTWARE BUILD & PUBLISHING
+  .github/workflows/app-release.yml
+    - Four independent web distribution builds
+    - Windows/macOS/Linux desktop package candidates
+    - Android debug artifact vs optional signed AAB/APK
+    - iOS simulator validation vs optional signed IPA/TestFlight upload
+    - Optional Microsoft Store package / Google Play internal track
+    - Optional GitHub Release only behind manual dispatch and release gates
+  store-assets/                  Icon and feature-graphic templates, listing guide,
+                                 screenshots guide and release checklist
+  scripts/                       Preflight, SHA-256 validation, version stamping,
+                                 release metadata and store package configuration
+  Vendor app store review is external and cannot be bypassed by this software.
+
+TIER 5 — HOSTING & OPERATIONS
+  render.yaml                    Eight Render resources: marketing/admin/studio/
+                                 release-center static sites, API, render worker,
+                                 PostgreSQL and Key Value for Redis/BullMQ
+  Dockerfile.api                 API/worker shared image with FFmpeg
+  docker-compose.yml             Local stack
+  infra/                         Kubernetes/Nginx/Prometheus/Grafana starters
+  docs/                           Runbooks, API reference, Render deployment,
+                                 publication and validation boundaries
+
+DEPLOYMENT FLOW
+  Review/replace legal drafts → import source into PRIVATE GitHub repo → review CI
+  → commit Bun lockfile after dependency validation → select Render workspace
+  → import render.yaml Blueprint → inspect region/resource plans/costs → enter
+  secrets in Render → deploy → verify health and DB migrations → test full media
+  upload/render/download → set custom domains/CORS → configure signing/developer
+  accounts → build/sign artifacts → store submission → vendor review → publish.
+
+TRUST BOUNDARY
+  Never store real .env, JWT secrets, database/storage credentials, bot tokens,
+  signing keys, store certificates or Apple private keys in Git. Keep store and
+  signing secrets in protected CI settings; use short-lived URLs for objects.
+
+MATURITY NOTE
+  This is an expanded production-oriented source foundation, not yet production-
+  certified. Full Bun install/typecheck/build, container boot, live services, store
+  signing, legal review and a Render deployment remain outstanding.
